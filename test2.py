@@ -1,8 +1,8 @@
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 
-img_path = r'E:\PRODEB\ProstateSegmentationDataSet\Nrrd\88632393.nrrd'
-label_path = r'E:\PRODEB\ProstateSegmentationDataSet\Nrrd\88632393-label.nrrd'
+img_path = r'E:\PRODEB\ProstateSegmentationDataSet\Nrrd\XXXXX.nrrd'
+label_path = r'E:\PRODEB\ProstateSegmentationDataSet\Nrrd\XXXXX-label.nrrd'
 
 img_vol = sitk.ReadImage(img_path)
 label_vol = sitk.ReadImage(label_path)
