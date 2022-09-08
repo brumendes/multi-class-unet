@@ -46,8 +46,8 @@ model.to(config.DEVICE)
 
 # # 6: Connect to Neptune and set parameters
 # run = neptune.init(
-#     project="brunomendes81/ProstateSegmentation",
-#     api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI1Nzk0MzQ2My1jNTg2LTQ4ZmMtODc3ZS02ZjU0YzJiMWE5ZjQifQ==",
+#     project="****",
+#     api_token="*****",
 # )
 
 # params = {
