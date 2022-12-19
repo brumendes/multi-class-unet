@@ -10,7 +10,7 @@ import config
 from dataset import CTDataSet
 from model import Unet
 import statistics
-# import neptune.new as neptune
+import neptune.new as neptune
 from utils import gen_train_val_split_file, get_train_val_split, get_class_weights, compute_metrics
 
 # 0: Generate Train/Val split from filenames in volumes directory
