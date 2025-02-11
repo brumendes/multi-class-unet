@@ -1,0 +1,12 @@
+[project]
+name = "multi-class-unet"
+version = "0.1.0"
+description = "Prostate, bladder and rectum segmentation using U-Net"
+readme = "README.md"
+dependencies = [
+    "pandas>=2.2.3",
+    "simpleitk>=2.4.1",
+    "torch>=2.6.0",
+    "torchvision>=0.21.0",
+    "tqdm>=4.67.1",
+]
