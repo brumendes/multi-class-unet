@@ -1,40 +1,80 @@
+import sys
 from ultralytics import YOLO
 from pathlib import Path
 import numpy as np
 import cv2
 import SimpleITK as sitk
 from rt_utils import RTStructBuilder
+import logging
+from datetime import datetime
 
 
-def prepare_yolo_dataset(dicom_dir, output_dir):
+# Set paths
+DICOM_DIR = Path("../DicomDataset")
+DATASET_DIR = Path("../datasets/prostate")
+IMAGES_DIR = DATASET_DIR / "images" / "train"
+LABELS_DIR = DATASET_DIR / "labels" / "train"
+
+
+class TeeStream:
+    """Stream handler that writes to both file and terminal"""
+    def __init__(self, file, terminal):
+        self.file = file
+        self.terminal = terminal
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.file.write(message)
+        self.terminal.flush()
+        self.file.flush()
+
+    def flush(self):
+        self.terminal.flush()
+        self.file.flush()
+
+
+def setup_logging(log_dir='logs'):
+    """Setup logging to both file and console"""
+    log_dir = Path(log_dir)
+    log_dir.mkdir(exist_ok=True)
+    
+    # Create timestamped log file
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    log_file = log_dir / f'training_{timestamp}.log'
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()  # This will print to console
+        ]
+    )
+    return log_file
+
+def prepare_yolo_dataset():
     """
     Convert DICOM images and RT structures to YOLO format
     """
-    dicom_dir = Path(dicom_dir)
-    output_dir = Path(output_dir)
-    images_dir = output_dir / "images" / "train"
-    labels_dir = output_dir / "labels" / "train"
-    images_dir.mkdir(parents=True, exist_ok=True)
-    labels_dir.mkdir(parents=True, exist_ok=True)
-
-    for patient_dir in dicom_dir.iterdir():
+    for patient_dir in DICOM_DIR.iterdir():
         if not patient_dir.is_dir():
             continue
             
         rt_dir = patient_dir / "RT"
         if not rt_dir.exists():
-            print(f"No RT directory found in {patient_dir}")
+            logging.warning(f"No RT directory found in {patient_dir}")
             continue
             
         for exam_dir in rt_dir.iterdir():
             if not exam_dir.is_dir():
                 continue
                 
-            print(f"\nProcessing exam: {exam_dir}")
+            logging.info(f"\nProcessing exam: {exam_dir}")
             
             rt_struct_path = next(exam_dir.glob("RS*.dcm"), None)
             if not rt_struct_path:
-                print(f"No RT structure file found in {exam_dir}")
+                logging.warning(f"No RT structure file found in {exam_dir}")
                 continue
 
             try:
@@ -42,15 +82,15 @@ def prepare_yolo_dataset(dicom_dir, output_dir):
                 reader = sitk.ImageSeriesReader()
                 dicom_names = reader.GetGDCMSeriesFileNames(str(exam_dir))
                 if not dicom_names:
-                    print(f"No DICOM series found in {exam_dir}")
+                    logging.warning(f"No DICOM series found in {exam_dir}")
                     continue
                     
                 reader.SetFileNames(dicom_names)
                 series = reader.Execute()
                 img_array = sitk.GetArrayFromImage(series)  # (slices, H, W)
                 
-                print(f"Found {len(dicom_names)} DICOM files")
-                print(f"Image array shape: {img_array.shape}")
+                logging.info(f"Found {len(dicom_names)} DICOM files")
+                logging.info(f"Image array shape: {img_array.shape}")
                 
                 # Get contours from RT structure
                 rtstruct = RTStructBuilder.create_from(
@@ -61,7 +101,7 @@ def prepare_yolo_dataset(dicom_dir, output_dir):
                 mask_3d = rtstruct.get_roi_mask_by_name("Prostate")
                 # Transpose mask to match image dimensions
                 mask_3d = np.transpose(mask_3d, (2, 0, 1))
-                print(f"Mask array shape after transpose: {mask_3d.shape}")
+                logging.info(f"Mask array shape after transpose: {mask_3d.shape}")
 
                 # Process each slice
                 slices_with_roi = 0
@@ -86,11 +126,11 @@ def prepare_yolo_dataset(dicom_dir, output_dir):
 
                     # Save image
                     img_name = f"{patient_dir.name}_{exam_dir.name}_{i:03d}.png"
-                    img_path = images_dir / img_name
+                    img_path = IMAGES_DIR / img_name
                     cv2.imwrite(str(img_path), img_norm)
 
                     # Create YOLO label
-                    label_path = labels_dir / f"{patient_dir.name}_{exam_dir.name}_{i:03d}.txt"
+                    label_path = LABELS_DIR / f"{patient_dir.name}_{exam_dir.name}_{i:03d}.txt"
                     height, width = mask.shape
                     with open(label_path, 'w') as f:
                         for contour in contours:
@@ -107,13 +147,11 @@ def prepare_yolo_dataset(dicom_dir, output_dir):
                             points_str = " ".join([f"{x:.6f} {y:.6f}" for x, y in points_norm])
                             f.write(f"0 {points_str}\n")
 
-                print(f"Processed {slices_with_roi} slices with ROI")
+                logging.info(f"Processed {slices_with_roi} slices with ROI")
                 
             except Exception as e:
-                print(f"Error processing {exam_dir}: {str(e)}")
+                logging.error(f"Error processing {exam_dir}: {str(e)}")
                 continue
-
-    return images_dir, labels_dir
 
 
 def create_validation_split(dataset_dir, val_split=0.2):
@@ -121,8 +159,10 @@ def create_validation_split(dataset_dir, val_split=0.2):
     dataset_dir = Path(dataset_dir)
     
     # Create validation directories
-    (dataset_dir / 'images' / 'val').mkdir(parents=True, exist_ok=True)
-    (dataset_dir / 'labels' / 'val').mkdir(parents=True, exist_ok=True)
+    val_images_dir = dataset_dir / 'images' / 'val'
+    val_labels_dir = dataset_dir / 'labels' / 'val'
+    val_images_dir.mkdir(parents=True, exist_ok=True)
+    val_labels_dir.mkdir(parents=True, exist_ok=True)
     
     # Get all training images
     train_images = list((dataset_dir / 'images' / 'train').glob('*.png'))
@@ -132,54 +172,83 @@ def create_validation_split(dataset_dir, val_split=0.2):
     val_images = np.random.choice(train_images, val_size, replace=False)
     
     # Move validation images and their labels
+    moved_count = 0
     for img_path in val_images:
         img_name = img_path.name
         label_name = img_path.stem + '.txt'
         
-        # Move image
-        img_path.rename(dataset_dir / 'images' / 'val' / img_name)
+        # Define target paths
+        val_img_path = val_images_dir / img_name
+        val_label_path = val_labels_dir / label_name
         
-        # Move corresponding label
-        label_path = dataset_dir / 'labels' / 'train' / label_name
-        if label_path.exists():
-            label_path.rename(dataset_dir / 'labels' / 'val' / label_name)
+        try:
+            # Move image if it doesn't exist in val
+            if not val_img_path.exists():
+                img_path.rename(val_img_path)
+                
+                # Move corresponding label
+                label_path = dataset_dir / 'labels' / 'train' / label_name
+                if label_path.exists() and not val_label_path.exists():
+                    label_path.rename(val_label_path)
+                    moved_count += 1
+        except Exception as e:
+            logging.error(f"Error moving {img_name}: {str(e)}")
+            continue
     
-    print(f"Split {len(val_images)} images for validation")
+    logging.info(f"Split {moved_count} images for validation")
 
 
 if __name__ == "__main__":
-    # Set paths
-    dicom_dir = Path("../DicomDataset")
-    dataset_dir = Path("../datasets/prostate")
-        
+    # Setup logging
+    log_file = setup_logging()
+    logging.info("Starting YOLO training preparation...")
+
+    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    LABELS_DIR.mkdir(parents=True, exist_ok=True)
+
     # Prepare dataset
-    images_dir, labels_dir = prepare_yolo_dataset(dicom_dir, dataset_dir)
-    
+    # prepare_yolo_dataset()
+
     # Print dataset statistics
-    print("\nDataset statistics:")
-    print(f"Number of images: {len(list(images_dir.glob('*.png')))}")
-    print(f"Number of labels: {len(list(labels_dir.glob('*.txt')))}")
+    logging.info("\nDataset statistics:")
+    logging.info(f"Number of images: {len(list(IMAGES_DIR.glob('*.png')))}")
+    logging.info(f"Number of labels: {len(list(LABELS_DIR.glob('*.txt')))}")
     
     # Create validation split if we have data
-    if len(list(images_dir.glob('*.png'))) > 0:
-        create_validation_split(dataset_dir)
-        create_validation_split(dataset_dir)
+    if len(list(IMAGES_DIR.glob('*.png'))) > 0:
+        # create_validation_split(DATASET_DIR)
+
+        # Setup YOLO logging
+        log_dir = Path('logs')
+        yolo_log = log_dir / f'yolo_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
         
-        # Initialize and train model
-        model = YOLO('yolov8n-seg.pt')  # load pretrained model
-        results = model.train(
-            data='prostate.yml',
-            epochs=20,
-            imgsz=512,
-            batch=16,
-            name='prostate_seg',
-            device=0,  # GPU device (use -1 for CPU)
-            workers=4,
-            val=True,
-            patience=20,  # early stopping patience
-            save=True,  # save checkpoints
-            project='prostate_segmentation',  # project name
-            save_period=10  # save checkpoint every 10 epochs
-        )
-    else:
-        print("No data was generated. Please check the error messages above.")
+        # Create tee stream that writes to both file and terminal
+        original_stdout = sys.stdout
+        with open(yolo_log, 'w') as f:
+            tee = TeeStream(f, original_stdout)
+            sys.stdout = tee
+
+            try:
+                # Initialize and train model
+                model = YOLO('yolov8n-seg.pt')  # load pretrained model
+                results = model.train(
+                    data='prostate.yml',
+                    epochs=1,
+                    imgsz=512,
+                    batch=16,
+                    name='prostate_seg',
+                    device=0,  # GPU device (use -1 for CPU)
+                    workers=4,
+                    val=True,
+                    patience=20,  # early stopping patience
+                    save=True,  # save checkpoints
+                    project='prostate_segmentation',  # project name
+                    save_period=10,  # save checkpoint every 10 epochs
+                    logger='csv',  # log results to f'runs/train'
+                )
+            finally:
+                # Restore original stdout
+                sys.stdout = original_stdout
+
+    logging.info(f"Training completed. Results saved in {results.save_dir}")
+    logging.info(f"YOLO terminal output saved to {yolo_log}")
