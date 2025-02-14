@@ -233,9 +233,9 @@ if __name__ == "__main__":
                 model = YOLO('yolov8n-seg.pt')  # load pretrained model
                 results = model.train(
                     data='prostate.yml',
-                    epochs=1,
+                    epochs=10,
                     imgsz=512,
-                    batch=16,
+                    batch=8,
                     name='prostate_seg',
                     device=0,  # GPU device (use -1 for CPU)
                     workers=4,
@@ -244,7 +244,7 @@ if __name__ == "__main__":
                     save=True,  # save checkpoints
                     project='prostate_segmentation',  # project name
                     save_period=10,  # save checkpoint every 10 epochs
-                    logger='csv',  # log results to f'runs/train'
+                    # logger='csv',  # log results to f'runs/train'
                 )
             finally:
                 # Restore original stdout

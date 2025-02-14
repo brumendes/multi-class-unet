@@ -1,0 +1,5 @@
+2025-02-14 11:03:24,023 - INFO - Starting YOLO training preparation...
+2025-02-14 11:03:24,023 - INFO - 
+Dataset statistics:
+2025-02-14 11:03:24,111 - INFO - Number of images: 965
+2025-02-14 11:03:24,120 - INFO - Number of labels: 971

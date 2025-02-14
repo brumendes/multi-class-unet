@@ -1,0 +1,7 @@
+2025-02-14 11:05:13,838 - INFO - Starting YOLO training preparation...
+2025-02-14 11:05:13,838 - INFO - 
+Dataset statistics:
+2025-02-14 11:05:13,922 - INFO - Number of images: 965
+2025-02-14 11:05:13,929 - INFO - Number of labels: 971
+2025-02-14 11:45:29,100 - INFO - Training completed. Results saved in prostate_segmentation\prostate_seg4
+2025-02-14 11:45:29,100 - INFO - YOLO terminal output saved to logs\yolo_output_20250214_110513.txt

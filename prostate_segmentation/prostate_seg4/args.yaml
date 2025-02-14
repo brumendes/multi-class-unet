@@ -2,10 +2,10 @@ task: segment
 mode: train
 model: yolov8n-seg.pt
 data: prostate.yml
-epochs: 1
+epochs: 10
 time: null
 patience: 20
-batch: 16
+batch: 8
 imgsz: 512
 save: true
 save_period: 10
@@ -13,7 +13,7 @@ cache: false
 device: 0
 workers: 4
 project: prostate_segmentation
-name: prostate_seg
+name: prostate_seg4
 exist_ok: false
 pretrained: true
 optimizer: auto
@@ -103,4 +103,4 @@ erasing: 0.4
 crop_fraction: 1.0
 cfg: null
 tracker: botsort.yaml
-save_dir: prostate_segmentation\prostate_seg
+save_dir: prostate_segmentation\prostate_seg4
