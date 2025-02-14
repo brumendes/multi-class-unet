@@ -92,4 +92,4 @@ def label_overlay(image, label_image):
         opacity=1, 
         contourThickness=[2, 2],
         )
-    return sitk.GetArrayFromImage(overlay)
+    return overlay
