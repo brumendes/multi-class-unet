@@ -82,15 +82,11 @@ def process_dicom_to_tiff(dicom_path, output_path):
         modality = reader.GetMetaData(0, "0008|0060")
         number_of_channels = dicom_img.GetNumberOfComponentsPerPixel()
         photometric_interpretation = reader.GetMetaData(0, "0028|0004")
-        slope = int(reader.GetMetaData(0, "0028|1053"))
-        intercept = int(reader.GetMetaData(0, "0028|1052"))
         logging.info(f'Image Modality: {modality}')
         logging.info(f"Number of channels: {number_of_channels}")
         logging.info(f'Photomertic Interpretation: {photometric_interpretation}')
         logging.info(f"Spacing: {spacing}")
         logging.info(f"Origin: {origin}")
-        logging.info(f"Slope: {slope}")
-        logging.info(f"Intercept: {intercept}")
 
         sitk_image_out = sitk.Cast(dicom_img, sitk.sitkFloat32)
 
