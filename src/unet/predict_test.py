@@ -6,8 +6,8 @@ from torch.utils.data import DataLoader
 import SimpleITK as sitk
 from pydicom import dcmread
 
-from model import Unet
-from img_utils import label_overlay
+from src.unet.model import Unet
+from src.img_utils import label_overlay
 
 
 # Project Name

@@ -16,23 +16,6 @@ IMAGES_DIR = DATASET_DIR / "images" / "train"
 LABELS_DIR = DATASET_DIR / "labels" / "train"
 
 
-class TeeStream:
-    """Stream handler that writes to both file and terminal"""
-    def __init__(self, file, terminal):
-        self.file = file
-        self.terminal = terminal
-
-    def write(self, message):
-        self.terminal.write(message)
-        self.file.write(message)
-        self.terminal.flush()
-        self.file.flush()
-
-    def flush(self):
-        self.terminal.flush()
-        self.file.flush()
-
-
 def setup_logging(log_dir='logs'):
     """Setup logging to both file and console"""
     log_dir = Path(log_dir)
@@ -47,7 +30,7 @@ def setup_logging(log_dir='logs'):
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler(log_file),
+            # logging.FileHandler(log_file),
             logging.StreamHandler()  # This will print to console
         ]
     )
@@ -218,6 +201,9 @@ if __name__ == "__main__":
     if len(list(IMAGES_DIR.glob('*.png'))) > 0:
         # create_validation_split(DATASET_DIR)
 
+        setup_logging()
+        logging.info("Starting YOLO training...")
+
         # Setup YOLO logging
         log_dir = Path('logs')
         yolo_log = log_dir / f'yolo_output_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt'
@@ -225,9 +211,6 @@ if __name__ == "__main__":
         # Create tee stream that writes to both file and terminal
         original_stdout = sys.stdout
         with open(yolo_log, 'w') as f:
-            tee = TeeStream(f, original_stdout)
-            sys.stdout = tee
-
             try:
                 # Initialize and train model
                 model = YOLO('yolov8n-seg.pt')  # load pretrained model
@@ -244,7 +227,6 @@ if __name__ == "__main__":
                     save=True,  # save checkpoints
                     project='prostate_segmentation',  # project name
                     save_period=10,  # save checkpoint every 10 epochs
-                    # logger='csv',  # log results to f'runs/train'
                 )
             finally:
                 # Restore original stdout

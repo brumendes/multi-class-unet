@@ -5,10 +5,10 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import CenterCrop
 import config
-from dataset import CTDataSet
-from model import Unet
-from utils import get_train_val_split, compute_metrics
-from img_utils import label_overlay, results_display
+from src.unet.dataset import CTDataSet
+from src.unet.model import Unet
+from src.utils import get_train_val_split, compute_metrics
+from src.img_utils import label_overlay, results_display
 
 # 1: Get train/val split
 train_imgs, val_imgs, train_labels, val_labels = get_train_val_split(

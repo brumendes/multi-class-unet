@@ -4,7 +4,7 @@ import tqdm as tq
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from dicom_tools import get_dicom_data
+from src.dicom_tools import get_dicom_data
 import config
 
 
