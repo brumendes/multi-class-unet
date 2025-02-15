@@ -100,7 +100,7 @@ def process_dicom_to_tiff(dicom_path, output_path):
         writer = sitk.ImageSeriesWriter()
         writer.AddCommand(sitk.sitkProgressEvent, lambda: print("\rProgress: {0:03.1f}%...".format(100*writer.GetProgress()),end=''))
         writer.AddCommand(sitk.sitkEndEvent, lambda: print("Done"))
-        writer.AddCommand(sitk.sitkStartEvent, lambda: logging.info("Starting TIFF export..."))
+        writer.AddCommand(sitk.sitkStartEvent, lambda: logging.info("Exporting to TIFF..."))
         writer.AddCommand(sitk.sitkEndEvent, lambda: logging.info("TIFF export completed"))
         writer.SetFileNames(output_file_names)
         writer.SetUseCompression(True)
