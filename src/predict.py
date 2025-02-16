@@ -5,8 +5,8 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import CenterCrop
 import config
-from src.unet.dataset import CTDataSet
-from src.unet.model import Unet
+from dataset import CTDataSet
+from model import Unet
 from src.utils import get_train_val_split, compute_metrics
 from src.img_utils import label_overlay, results_display
 

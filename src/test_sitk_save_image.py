@@ -23,31 +23,6 @@ def setup_logging(log_dir='logs'):
     )
 
 
-def apply_windowing(image, window_center, window_width):
-    """
-    Apply intensity windowing to an image
-    
-    Args:
-        image (SimpleITK.Image): Input image
-        window_center (float): Window center
-        window_width (float): Window width
-        
-    Returns:
-        SimpleITK.Image: Windowed image
-    """
-    min_intensity = window_center - (window_width / 2)
-    max_intensity = window_center + (window_width / 2)
-    
-    window_params = {
-        'windowMinimum': min_intensity,
-        'windowMaximum': max_intensity,
-        'outputMinimum': 0,
-        'outputMaximum': 2^16 - 1
-    }
-    
-    return sitk.IntensityWindowing(image, **window_params)
-
-
 def process_dicom_to_tiff(dicom_path, output_path):
     """
     Convert DICOM series to TIFF images

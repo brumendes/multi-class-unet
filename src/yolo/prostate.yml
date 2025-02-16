@@ -1,8 +1,0 @@
-path: ../datasets/prostate
-train: images/train
-val: images/val
-
-names:
-  0: prostate
-
-nc: 1  # number of classes

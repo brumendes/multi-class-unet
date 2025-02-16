@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import SimpleITK as sitk
 from pydicom import dcmread
 
-from src.unet.model import Unet
+from model import Unet
 from src.img_utils import label_overlay
 
 
